@@ -1,0 +1,700 @@
+{
+	"info": {
+		"_postman_id": "fintech-api-testing",
+		"name": "FinTech API Testing",
+		"description": "Complete API testing collection for Ledger Service and Transfer Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Ledger Service (Port 8081)",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Account 1",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"initialBalance\": 1000.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/accounts",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Account 2",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"initialBalance\": 500.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/accounts",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Account 3",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"initialBalance\": 200.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/accounts",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account 1",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/accounts/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"accounts",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account 2",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/accounts/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"accounts",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account 3",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/accounts/3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"accounts",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Direct Transfer (Internal)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"transferId\": \"direct-transfer-123\",\n  \"fromAccountId\": 1,\n  \"toAccountId\": 2,\n  \"amount\": 100.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/ledger/transfer",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"ledger",
+								"transfer"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Transfer Service (Port 8080)",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/actuator/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Single Transfer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "single-transfer-{{$timestamp}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fromAccountId\": 1,\n  \"toAccountId\": 2,\n  \"amount\": 100.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/transfers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"transfers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Transfer (Duplicate Idempotency)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "duplicate-test-key"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fromAccountId\": 1,\n  \"toAccountId\": 2,\n  \"amount\": 200.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/transfers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"transfers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Transfer (Insufficient Funds)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "insufficient-funds-test"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fromAccountId\": 1,\n  \"toAccountId\": 2,\n  \"amount\": 2000.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/transfers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"transfers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Transfer (Invalid Account)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "invalid-account-test"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fromAccountId\": 999,\n  \"toAccountId\": 2,\n  \"amount\": 100.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/transfers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"transfers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transfer by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/transfers/{{transferId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"transfers",
+								"{{transferId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transfer (Non-existent)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/transfers/non-existent-id",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"transfers",
+								"non-existent-id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Batch Transfer (2 transfers)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"transfers\": [\n    {\n      \"idempotencyKey\": \"batch-1-{{$timestamp}}\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 3,\n      \"amount\": 50.00\n    },\n    {\n      \"idempotencyKey\": \"batch-2-{{$timestamp}}\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 3,\n      \"amount\": 25.00\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/transfers/batch",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"transfers",
+								"batch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Batch Transfer (Large - 5 transfers)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"transfers\": [\n    {\n      \"idempotencyKey\": \"large-batch-1-{{$timestamp}}\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 2,\n      \"amount\": 10.00\n    },\n    {\n      \"idempotencyKey\": \"large-batch-2-{{$timestamp}}\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 3,\n      \"amount\": 15.00\n    },\n    {\n      \"idempotencyKey\": \"large-batch-3-{{$timestamp}}\",\n      \"fromAccountId\": 3,\n      \"toAccountId\": 1,\n      \"amount\": 20.00\n    },\n    {\n      \"idempotencyKey\": \"large-batch-4-{{$timestamp}}\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 3,\n      \"amount\": 5.00\n    },\n    {\n      \"idempotencyKey\": \"large-batch-5-{{$timestamp}}\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 1,\n      \"amount\": 30.00\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/transfers/batch",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"transfers",
+								"batch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Batch Transfer (Too Many - Error)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"transfers\": [\n    {\n      \"idempotencyKey\": \"error-batch-1\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 2,\n      \"amount\": 10.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-2\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 3,\n      \"amount\": 15.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-3\",\n      \"fromAccountId\": 3,\n      \"toAccountId\": 1,\n      \"amount\": 20.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-4\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 3,\n      \"amount\": 5.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-5\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 1,\n      \"amount\": 30.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-6\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 2,\n      \"amount\": 10.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-7\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 3,\n      \"amount\": 15.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-8\",\n      \"fromAccountId\": 3,\n      \"toAccountId\": 1,\n      \"amount\": 20.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-9\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 3,\n      \"amount\": 5.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-10\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 1,\n      \"amount\": 30.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-11\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 2,\n      \"amount\": 10.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-12\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 3,\n      \"amount\": 15.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-13\",\n      \"fromAccountId\": 3,\n      \"toAccountId\": 1,\n      \"amount\": 20.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-14\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 3,\n      \"amount\": 5.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-15\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 1,\n      \"amount\": 30.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-16\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 2,\n      \"amount\": 10.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-17\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 3,\n      \"amount\": 15.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-18\",\n      \"fromAccountId\": 3,\n      \"toAccountId\": 1,\n      \"amount\": 20.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-19\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 3,\n      \"amount\": 5.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-20\",\n      \"fromAccountId\": 2,\n      \"toAccountId\": 1,\n      \"amount\": 30.00\n    },\n    {\n      \"idempotencyKey\": \"error-batch-21\",\n      \"fromAccountId\": 1,\n      \"toAccountId\": 2,\n      \"amount\": 10.00\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/transfers/batch",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"transfers",
+								"batch"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Test Scenarios",
+			"item": [
+				{
+					"name": "Complete Flow Test",
+					"item": [
+						{
+							"name": "1. Create Accounts",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"initialBalance\": 1000.00\n}"
+								},
+								"url": {
+									"raw": "http://localhost:8081/accounts",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8081",
+									"path": [
+										"accounts"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "2. Create Second Account",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"initialBalance\": 500.00\n}"
+								},
+								"url": {
+									"raw": "http://localhost:8081/accounts",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8081",
+									"path": [
+										"accounts"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "3. Create Third Account",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"initialBalance\": 200.00\n}"
+								},
+								"url": {
+									"raw": "http://localhost:8081/accounts",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8081",
+									"path": [
+										"accounts"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "4. Verify Account Balances",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8081/accounts/1",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8081",
+									"path": [
+										"accounts",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "5. Create Transfer",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Idempotency-Key",
+										"value": "flow-test-{{$timestamp}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"fromAccountId\": 1,\n  \"toAccountId\": 2,\n  \"amount\": 100.00\n}"
+								},
+								"url": {
+									"raw": "http://localhost:8080/transfers",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"transfers"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "6. Check Transfer Status",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/transfers/{{transferId}}",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"transfers",
+										"{{transferId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "7. Verify Final Balances",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8081/accounts/1",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8081",
+									"path": [
+										"accounts",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "8. Verify Second Account Balance",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8081/accounts/2",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8081",
+									"path": [
+										"accounts",
+										"2"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "transferId",
+			"value": "replace-with-actual-transfer-id",
+			"type": "string"
+		}
+	]
+}

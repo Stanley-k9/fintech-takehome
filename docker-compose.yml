@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: fintech
+      POSTGRES_PASSWORD: fintech123
+      POSTGRES_DB: fintech
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fintech"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ledger-service:
+    build: ./ledger-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fintech
+      SPRING_DATASOURCE_USERNAME: fintech
+      SPRING_DATASOURCE_PASSWORD: fintech123
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  transfer-service:
+    build: ./transfer-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fintech
+      SPRING_DATASOURCE_USERNAME: fintech
+      SPRING_DATASOURCE_PASSWORD: fintech123
+      LEDGER_SERVICE_URL: http://ledger-service:8081
+    depends_on:
+      ledger-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+
+
