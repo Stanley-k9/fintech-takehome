@@ -1,0 +1,6 @@
+com/example/ledger/LedgerApplication.class
+com/example/ledger/repository/AccountRepository.class
+com/example/ledger/model/LedgerEntry$EntryType.class
+com/example/ledger/model/Account.class
+com/example/ledger/model/LedgerEntry.class
+com/example/ledger/repository/LedgerEntryRepository.class

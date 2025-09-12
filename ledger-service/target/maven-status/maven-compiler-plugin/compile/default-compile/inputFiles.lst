@@ -1,0 +1,7 @@
+/Users/stanley/projects/fintech-takehome/ledger-service/src/main/java/com/example/ledger/model/Account.java
+/Users/stanley/projects/fintech-takehome/ledger-service/src/main/java/com/example/ledger/controller/LedgerController.java
+/Users/stanley/projects/fintech-takehome/ledger-service/src/main/java/com/example/ledger/repository/LedgerEntryRepository.java
+/Users/stanley/projects/fintech-takehome/ledger-service/src/main/java/com/example/ledger/repository/AccountRepository.java
+/Users/stanley/projects/fintech-takehome/ledger-service/src/main/java/com/example/ledger/LedgerApplication.java
+/Users/stanley/projects/fintech-takehome/ledger-service/src/main/java/com/example/ledger/model/LedgerEntry.java
+/Users/stanley/projects/fintech-takehome/ledger-service/src/main/java/com/example/ledger/service/LedgerService.java
