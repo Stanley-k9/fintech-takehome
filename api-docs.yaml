@@ -1,0 +1,380 @@
+openapi: 3.0.3
+info:
+  title: FinTech Payments System API
+  description: A payments system that handles money transfers between accounts safely and efficiently
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8081
+    description: Ledger Service
+  - url: http://localhost:8080
+    description: Transfer Service
+
+paths:
+  # Ledger Service Endpoints
+  /accounts:
+    post:
+      tags:
+        - Accounts
+      summary: Create account
+      description: Create a new account with initial balance
+      operationId: createAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequest'
+      responses:
+        '200':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Bad request - invalid input
+        '500':
+          description: Internal server error
+
+  /accounts/{id}:
+    get:
+      tags:
+        - Accounts
+      summary: Get account
+      description: Get account details by ID
+      operationId: getAccount
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Account ID
+      responses:
+        '200':
+          description: Account found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '404':
+          description: Account not found
+        '500':
+          description: Internal server error
+
+  /ledger/transfer:
+    post:
+      tags:
+        - Ledger
+      summary: Apply transfer
+      description: Process a money transfer between accounts (internal use)
+      operationId: applyTransfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Transfer processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+        '400':
+          description: Bad request - invalid transfer
+        '500':
+          description: Internal server error
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check if the ledger service is running
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Ledger Service is healthy"
+
+  # Transfer Service Endpoints
+  /transfers:
+    post:
+      tags:
+        - Transfers
+      summary: Create transfer
+      description: Create a new money transfer between accounts
+      operationId: createTransfer
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Unique key to prevent duplicate transfers
+        - name: X-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Request correlation ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransferRequest'
+      responses:
+        '200':
+          description: Transfer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+        '400':
+          description: Bad request - invalid transfer
+        '500':
+          description: Internal server error
+
+  /transfers/{id}:
+    get:
+      tags:
+        - Transfers
+      summary: Get transfer
+      description: Get transfer status by transfer ID
+      operationId: getTransfer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Transfer ID
+      responses:
+        '200':
+          description: Transfer found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+        '404':
+          description: Transfer not found
+        '500':
+          description: Internal server error
+
+  /transfers/batch:
+    post:
+      tags:
+        - Transfers
+      summary: Batch transfers
+      description: Process up to 20 transfers concurrently
+      operationId: processBatchTransfers
+      parameters:
+        - name: X-Request-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Request correlation ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchTransferRequest'
+      responses:
+        '200':
+          description: Batch transfers processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchTransferResponse'
+        '400':
+          description: Bad request - invalid batch
+        '500':
+          description: Internal server error
+
+  /actuator/health:
+    get:
+      tags:
+        - Health
+      summary: Transfer service health check
+      description: Check if the transfer service is running
+      operationId: transferHealthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Account ID
+        balance:
+          type: number
+          format: decimal
+          description: Account balance in Rands
+        version:
+          type: integer
+          format: int64
+          description: Version for optimistic locking
+      required:
+        - id
+        - balance
+
+    CreateAccountRequest:
+      type: object
+      properties:
+        initialBalance:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Initial account balance in Rands
+      required:
+        - initialBalance
+
+    TransferRequest:
+      type: object
+      properties:
+        transferId:
+          type: string
+          description: Unique transfer identifier
+        fromAccountId:
+          type: integer
+          format: int64
+          description: Source account ID
+        toAccountId:
+          type: integer
+          format: int64
+          description: Destination account ID
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          description: Transfer amount in Rands
+      required:
+        - transferId
+        - fromAccountId
+        - toAccountId
+        - amount
+
+    CreateTransferRequest:
+      type: object
+      properties:
+        fromAccountId:
+          type: integer
+          format: int64
+          description: Source account ID
+        toAccountId:
+          type: integer
+          format: int64
+          description: Destination account ID
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          description: Transfer amount in Rands
+      required:
+        - fromAccountId
+        - toAccountId
+        - amount
+
+    TransferResponse:
+      type: object
+      properties:
+        transferId:
+          type: string
+          description: Transfer identifier
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED]
+          description: Transfer status
+        errorMessage:
+          type: string
+          description: Error message if transfer failed
+        success:
+          type: boolean
+          description: Whether the operation was successful
+        message:
+          type: string
+          description: Response message
+
+    BatchTransferRequest:
+      type: object
+      properties:
+        transfers:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchTransferItem'
+          minItems: 1
+          maxItems: 20
+          description: List of transfers to process
+      required:
+        - transfers
+
+    BatchTransferItem:
+      type: object
+      properties:
+        idempotencyKey:
+          type: string
+          description: Unique key for this transfer
+        fromAccountId:
+          type: integer
+          format: int64
+          description: Source account ID
+        toAccountId:
+          type: integer
+          format: int64
+          description: Destination account ID
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          description: Transfer amount in Rands
+      required:
+        - idempotencyKey
+        - fromAccountId
+        - toAccountId
+        - amount
+
+    BatchTransferResponse:
+      type: object
+      properties:
+        transfers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferResponse'
+          description: Results of all transfers
+
+tags:
+  - name: Accounts
+    description: Account management operations
+  - name: Transfers
+    description: Money transfer operations
+  - name: Ledger
+    description: Internal ledger operations
+  - name: Health
+    description: Service health checks
