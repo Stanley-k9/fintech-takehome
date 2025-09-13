@@ -124,8 +124,7 @@ jobs:
     
     - name: Start Ledger Service
       run: |
-        java -jar ledger-service/target/ledger-service-0.0.1-SNAPSHOT.jar &
-        sleep 15
+        nohup java -jar ledger-service/target/ledger-service-0.0.1-SNAPSHOT.jar > ledger.log 2>&1 &
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
         SPRING_DATASOURCE_USERNAME: postgres
@@ -135,8 +134,7 @@ jobs:
     
     - name: Start Transfer Service
       run: |
-        java -jar transfer-service/target/transfer-service-0.0.1-SNAPSHOT.jar &
-        sleep 15
+        nohup java -jar transfer-service/target/transfer-service-0.0.1-SNAPSHOT.jar > transfer.log 2>&1 &
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
         SPRING_DATASOURCE_USERNAME: postgres
@@ -145,11 +143,37 @@ jobs:
         LEDGER_SERVICE_URL: http://localhost:8081
         SERVER_PORT: 8080
     
+    - name: Wait for Services to Start
+      run: |
+        sleep 30
+        ps aux | grep java | grep -v grep || echo "No Java processes found"
+    
     - name: Health Check
       run: |
-        curl -f http://localhost:8080/actuator/health || exit 1
-        curl -f http://localhost:8081/actuator/health || exit 1
-        echo "All services are healthy!"
+        for i in {1..10}; do
+          if curl -f http://localhost:8081/actuator/health; then
+            break
+          else
+            sleep 5
+          fi
+        done
+        
+        for i in {1..10}; do
+          if curl -f http://localhost:8080/actuator/health; then
+            break
+          else
+            sleep 5
+          fi
+        done
+        
+
+    - name: Show Service Logs (if health check fails)
+      if: failure()
+      run: |
+        cat ledger.log || echo "No ledger.log found"
+        cat transfer.log || echo "No transfer.log found"
+        ps aux | grep java | grep -v grep || echo "No Java processes running"
+        netstat -tlnp | grep -E ':(8080|8081)' || echo "No services listening on ports 8080/8081"
     
     - name: Integration Test
       run: |
