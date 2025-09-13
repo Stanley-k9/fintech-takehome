@@ -122,9 +122,38 @@ jobs:
       with:
         name: jar-files
     
+    - name: Wait for PostgreSQL
+      run: |
+        for i in {1..30}; do
+          if pg_isready -h localhost -p 5432 -U postgres; then
+            echo "PostgreSQL is ready"
+            break
+          else
+            echo "Waiting for PostgreSQL... attempt $i"
+            sleep 2
+          fi
+        done
+    
+    - name: Build services with PostgreSQL dependencies
+      run: |
+        cd ledger-service && ./mvnw clean package -DskipTests
+        cd ../transfer-service && ./mvnw clean package -DskipTests
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+        SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+    
     - name: Start Ledger Service
       run: |
+        ls -la ledger-service/target/
         nohup java -jar ledger-service/target/ledger-service-0.0.1-SNAPSHOT.jar > ledger.log 2>&1 &
+        sleep 5
+        if ! pgrep -f "ledger-service" > /dev/null; then
+          echo "Ledger service failed to start"
+          cat ledger.log
+          exit 1
+        fi
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
         SPRING_DATASOURCE_USERNAME: postgres
@@ -134,7 +163,14 @@ jobs:
     
     - name: Start Transfer Service
       run: |
+        ls -la transfer-service/target/
         nohup java -jar transfer-service/target/transfer-service-0.0.1-SNAPSHOT.jar > transfer.log 2>&1 &
+        sleep 5
+        if ! pgrep -f "transfer-service" > /dev/null; then
+          echo "Transfer service failed to start"
+          cat transfer.log
+          exit 1
+        fi
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
         SPRING_DATASOURCE_USERNAME: postgres
@@ -165,6 +201,13 @@ jobs:
             sleep 5
           fi
         done
+        
+        if ! curl -f http://localhost:8081/actuator/health || ! curl -f http://localhost:8080/actuator/health; then
+          echo "Health check failed"
+          ps aux | grep java | grep -v grep
+          netstat -tlnp | grep -E ':(8080|8081)' || echo "No services listening"
+          exit 1
+        fi
         
 
     - name: Show Service Logs (if health check fails)
