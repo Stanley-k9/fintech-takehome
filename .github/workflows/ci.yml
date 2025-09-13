@@ -34,7 +34,7 @@ jobs:
         distribution: 'temurin'
     
     - name: Cache Maven dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -83,7 +83,7 @@ jobs:
         LEDGER_SERVICE_URL: http://localhost:8081
     
     - name: Upload JAR artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: jar-files
         path: |
@@ -118,14 +118,14 @@ jobs:
         distribution: 'temurin'
     
     - name: Download JAR artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: jar-files
     
     - name: Start Ledger Service
       run: |
-        java -jar ledger-service-0.0.1-SNAPSHOT.jar &
-        sleep 10
+        java -jar ledger-service/target/ledger-service-0.0.1-SNAPSHOT.jar &
+        sleep 15
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
         SPRING_DATASOURCE_USERNAME: postgres
@@ -135,8 +135,8 @@ jobs:
     
     - name: Start Transfer Service
       run: |
-        java -jar transfer-service-0.0.1-SNAPSHOT.jar &
-        sleep 10
+        java -jar transfer-service/target/transfer-service-0.0.1-SNAPSHOT.jar &
+        sleep 15
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
         SPRING_DATASOURCE_USERNAME: postgres
@@ -153,15 +153,42 @@ jobs:
     
     - name: Integration Test
       run: |
+        echo "Starting integration tests..."
+        
         # Test account creation
-        curl -X POST http://localhost:8081/accounts \
+        echo "Creating test accounts..."
+        ACCOUNT1=$(curl -s -X POST http://localhost:8081/accounts \
           -H "Content-Type: application/json" \
-          -d '{"initialBalance": 1000.00}' || exit 1
+          -d '{"initialBalance": 1000.00}' | jq -r '.id')
+        echo "Created account 1 with ID: $ACCOUNT1"
+        
+        ACCOUNT2=$(curl -s -X POST http://localhost:8081/accounts \
+          -H "Content-Type: application/json" \
+          -d '{"initialBalance": 500.00}' | jq -r '.id')
+        echo "Created account 2 with ID: $ACCOUNT2"
         
         # Test transfer creation
-        curl -X POST http://localhost:8080/transfers \
+        echo "Creating transfer between accounts..."
+        TRANSFER_RESPONSE=$(curl -s -X POST http://localhost:8080/transfers \
           -H "Content-Type: application/json" \
-          -H "Idempotency-Key: test-123" \
-          -d '{"fromAccountId": 1, "toAccountId": 2, "amount": 100.00}' || exit 1
+          -H "Idempotency-Key: ci-test-$(date +%s)" \
+          -d "{\"fromAccountId\": $ACCOUNT1, \"toAccountId\": $ACCOUNT2, \"amount\": 100.00}")
+        echo "Transfer response: $TRANSFER_RESPONSE"
         
-        echo "Integration tests passed!"
+        # Wait for transfer to complete
+        sleep 5
+        
+        # Verify account balances
+        echo "Verifying account balances..."
+        BALANCE1=$(curl -s http://localhost:8081/accounts/$ACCOUNT1 | jq -r '.balance')
+        BALANCE2=$(curl -s http://localhost:8081/accounts/$ACCOUNT2 | jq -r '.balance')
+        echo "Account $ACCOUNT1 balance: $BALANCE1"
+        echo "Account $ACCOUNT2 balance: $BALANCE2"
+        
+        # Verify transfer was successful
+        if [ "$BALANCE1" = "900.00" ] && [ "$BALANCE2" = "600.00" ]; then
+          echo "✅ Integration tests passed! Transfer completed successfully."
+        else
+          echo "❌ Integration tests failed! Expected balances: 900.00 and 600.00, got: $BALANCE1 and $BALANCE2"
+          exit 1
+        fi
