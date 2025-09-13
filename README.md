@@ -182,11 +182,33 @@ docker-compose logs -f ledger-service
 docker-compose logs -f transfer-service
 ```
 
+## CI/CD Pipeline
+
+The project includes a GitHub Actions workflow that:
+- Runs tests with PostgreSQL database
+- Builds both services
+- Performs integration testing
+- Uploads JAR artifacts
+
+### Local CI Testing
+```bash
+# Run the CI test script locally
+./ci-test.sh
+```
+
+### GitHub Actions
+The CI/CD pipeline runs automatically on:
+- Push to `main` or `develop` branches
+- Pull requests to `main` branch
+
 ## Project Structure
 ```
 fintech-takehome/
 ├── ledger-service/          # Handles money movement
 ├── transfer-service/        # Public API
+├── .github/workflows/       # CI/CD pipeline
 ├── docker-compose.yml       # Easy deployment
+├── docker-compose.dev.yml   # Development with PostgreSQL
+├── ci-test.sh              # Local CI testing script
 └── README.md
 ```

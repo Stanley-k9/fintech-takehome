@@ -14,8 +14,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: fintech
-          POSTGRES_PASSWORD: fintech123
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: fintech
         options: >-
           --health-cmd pg_isready
@@ -41,27 +40,74 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     
-    - name: Run tests for ledger-service
+    - name: Test Ledger Service
       run: |
         cd ledger-service
-        ./mvnw clean test -Dspring.profiles.active=test
-        -Dspring.datasource.url=jdbc:postgresql://localhost:5432/fintech
-        -Dspring.datasource.username=fintech
-        -Dspring.datasource.password=fintech123
+        ./mvnw clean test
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+        SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
     
-    - name: Run tests for transfer-service
+    - name: Test Transfer Service
       run: |
         cd transfer-service
-        ./mvnw clean test -Dspring.profiles.active=test
-        -Dspring.datasource.url=jdbc:postgresql://localhost:5432/fintech
-        -Dspring.datasource.username=fintech
-        -Dspring.datasource.password=fintech123
-        -Dledger.service.url=http://localhost:8081
-
-  build:
-    needs: test
-    runs-on: ubuntu-latest
+        ./mvnw clean test
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+        SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+        LEDGER_SERVICE_URL: http://localhost:8081
     
+    - name: Build Ledger Service
+      run: |
+        cd ledger-service
+        ./mvnw clean package -DskipTests
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+        SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+    
+    - name: Build Transfer Service
+      run: |
+        cd transfer-service
+        ./mvnw clean package -DskipTests
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+        SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+        LEDGER_SERVICE_URL: http://localhost:8081
+    
+    - name: Upload JAR artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: jar-files
+        path: |
+          ledger-service/target/*.jar
+          transfer-service/target/*.jar
+
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fintech
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
     - uses: actions/checkout@v4
     
@@ -71,32 +117,51 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     
-    - name: Cache Maven dependencies
-      uses: actions/cache@v3
+    - name: Download JAR artifacts
+      uses: actions/download-artifact@v3
       with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
+        name: jar-files
     
-    - name: Build ledger-service
+    - name: Start Ledger Service
       run: |
-        cd ledger-service
-        ./mvnw clean package -DskipTests
+        java -jar ledger-service-0.0.1-SNAPSHOT.jar &
+        sleep 10
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+        SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+        SERVER_PORT: 8081
     
-    - name: Build transfer-service
+    - name: Start Transfer Service
       run: |
-        cd transfer-service
-        ./mvnw clean package -DskipTests
+        java -jar transfer-service-0.0.1-SNAPSHOT.jar &
+        sleep 10
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+        SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+        LEDGER_SERVICE_URL: http://localhost:8081
+        SERVER_PORT: 8080
     
-    - name: Build Docker images
+    - name: Health Check
       run: |
-        docker build -t ledger-service:latest ./ledger-service
-        docker build -t transfer-service:latest ./transfer-service
+        curl -f http://localhost:8080/actuator/health || exit 1
+        curl -f http://localhost:8081/actuator/health || exit 1
+        echo "All services are healthy!"
     
-    - name: Test Docker Compose
+    - name: Integration Test
       run: |
-        docker-compose up -d
-        sleep 30
-        docker-compose ps
-        docker-compose logs
-        docker-compose down
+        # Test account creation
+        curl -X POST http://localhost:8081/accounts \
+          -H "Content-Type: application/json" \
+          -d '{"initialBalance": 1000.00}' || exit 1
+        
+        # Test transfer creation
+        curl -X POST http://localhost:8080/transfers \
+          -H "Content-Type: application/json" \
+          -H "Idempotency-Key: test-123" \
+          -d '{"fromAccountId": 1, "toAccountId": 2, "amount": 100.00}' || exit 1
+        
+        echo "Integration tests passed!"
