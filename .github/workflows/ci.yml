@@ -117,145 +117,23 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     
-    - name: Download JAR artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: jar-files
-    
     - name: Wait for PostgreSQL
       run: |
         for i in {1..30}; do
           if pg_isready -h localhost -p 5432 -U postgres; then
-            echo "PostgreSQL is ready"
             break
           else
-            echo "Waiting for PostgreSQL... attempt $i"
             sleep 2
           fi
         done
     
-    - name: Build services with PostgreSQL dependencies
+    - name: Run Integration Tests
       run: |
-        cd ledger-service && ./mvnw clean package -DskipTests
-        cd ../transfer-service && ./mvnw clean package -DskipTests
-      env:
-        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
-        SPRING_DATASOURCE_USERNAME: postgres
-        SPRING_DATASOURCE_PASSWORD: postgres
-        SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
-    
-    - name: Start Ledger Service
-      run: |
-        ls -la ledger-service/target/
-        nohup java -jar ledger-service/target/ledger-service-0.0.1-SNAPSHOT.jar > ledger.log 2>&1 &
-        sleep 5
-        if ! pgrep -f "ledger-service" > /dev/null; then
-          echo "Ledger service failed to start"
-          cat ledger.log
-          exit 1
-        fi
-      env:
-        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
-        SPRING_DATASOURCE_USERNAME: postgres
-        SPRING_DATASOURCE_PASSWORD: postgres
-        SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
-        SERVER_PORT: 8081
-    
-    - name: Start Transfer Service
-      run: |
-        ls -la transfer-service/target/
-        nohup java -jar transfer-service/target/transfer-service-0.0.1-SNAPSHOT.jar > transfer.log 2>&1 &
-        sleep 5
-        if ! pgrep -f "transfer-service" > /dev/null; then
-          echo "Transfer service failed to start"
-          cat transfer.log
-          exit 1
-        fi
+        cd ledger-service && ./mvnw test -Dspring.profiles.active=ci
+        cd ../transfer-service && ./mvnw test -Dspring.profiles.active=ci
       env:
         SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/fintech
         SPRING_DATASOURCE_USERNAME: postgres
         SPRING_DATASOURCE_PASSWORD: postgres
         SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
         LEDGER_SERVICE_URL: http://localhost:8081
-        SERVER_PORT: 8080
-    
-    - name: Wait for Services to Start
-      run: |
-        sleep 30
-        ps aux | grep java | grep -v grep || echo "No Java processes found"
-    
-    - name: Health Check
-      run: |
-        for i in {1..10}; do
-          if curl -f http://localhost:8081/actuator/health; then
-            break
-          else
-            sleep 5
-          fi
-        done
-        
-        for i in {1..10}; do
-          if curl -f http://localhost:8080/actuator/health; then
-            break
-          else
-            sleep 5
-          fi
-        done
-        
-        if ! curl -f http://localhost:8081/actuator/health || ! curl -f http://localhost:8080/actuator/health; then
-          echo "Health check failed"
-          ps aux | grep java | grep -v grep
-          netstat -tlnp | grep -E ':(8080|8081)' || echo "No services listening"
-          exit 1
-        fi
-        
-
-    - name: Show Service Logs (if health check fails)
-      if: failure()
-      run: |
-        cat ledger.log || echo "No ledger.log found"
-        cat transfer.log || echo "No transfer.log found"
-        ps aux | grep java | grep -v grep || echo "No Java processes running"
-        netstat -tlnp | grep -E ':(8080|8081)' || echo "No services listening on ports 8080/8081"
-    
-    - name: Integration Test
-      run: |
-        echo "Starting integration tests..."
-        
-        # Test account creation
-        echo "Creating test accounts..."
-        ACCOUNT1=$(curl -s -X POST http://localhost:8081/accounts \
-          -H "Content-Type: application/json" \
-          -d '{"initialBalance": 1000.00}' | jq -r '.id')
-        echo "Created account 1 with ID: $ACCOUNT1"
-        
-        ACCOUNT2=$(curl -s -X POST http://localhost:8081/accounts \
-          -H "Content-Type: application/json" \
-          -d '{"initialBalance": 500.00}' | jq -r '.id')
-        echo "Created account 2 with ID: $ACCOUNT2"
-        
-        # Test transfer creation
-        echo "Creating transfer between accounts..."
-        TRANSFER_RESPONSE=$(curl -s -X POST http://localhost:8080/transfers \
-          -H "Content-Type: application/json" \
-          -H "Idempotency-Key: ci-test-$(date +%s)" \
-          -d "{\"fromAccountId\": $ACCOUNT1, \"toAccountId\": $ACCOUNT2, \"amount\": 100.00}")
-        echo "Transfer response: $TRANSFER_RESPONSE"
-        
-        # Wait for transfer to complete
-        sleep 5
-        
-        # Verify account balances
-        echo "Verifying account balances..."
-        BALANCE1=$(curl -s http://localhost:8081/accounts/$ACCOUNT1 | jq -r '.balance')
-        BALANCE2=$(curl -s http://localhost:8081/accounts/$ACCOUNT2 | jq -r '.balance')
-        echo "Account $ACCOUNT1 balance: $BALANCE1"
-        echo "Account $ACCOUNT2 balance: $BALANCE2"
-        
-        # Verify transfer was successful
-        if [ "$BALANCE1" = "900.00" ] && [ "$BALANCE2" = "600.00" ]; then
-          echo "✅ Integration tests passed! Transfer completed successfully."
-        else
-          echo "❌ Integration tests failed! Expected balances: 900.00 and 600.00, got: $BALANCE1 and $BALANCE2"
-          exit 1
-        fi
