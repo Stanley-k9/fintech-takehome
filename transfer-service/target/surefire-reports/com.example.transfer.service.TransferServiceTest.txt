@@ -1,16 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.example.transfer.service.TransferServiceTest
 -------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.342 s <<< FAILURE! -- in com.example.transfer.service.TransferServiceTest
-com.example.transfer.service.TransferServiceTest.createTransfer -- Time elapsed: 0.323 s <<< ERROR!
-org.mockito.exceptions.misusing.UnnecessaryStubbingException: 
-
-Unnecessary stubbings detected.
-Clean & maintainable test code requires zero unnecessary code.
-Following stubbings are unnecessary (click to navigate to relevant line of code):
-  1. -> at com.example.transfer.service.TransferServiceTest.createTransfer(TransferServiceTest.java:53)
-Please remove unnecessary stubbings or use 'lenient' strictness. More info: javadoc for UnnecessaryStubbingException class.
-	at org.mockito.junit.jupiter.MockitoExtension.afterEach(MockitoExtension.java:192)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
-
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.279 s -- in com.example.transfer.service.TransferServiceTest

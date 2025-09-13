@@ -50,6 +50,11 @@ class TransferServiceTest {
                     record.setId(1L);
                     return record;
                 });
+        
+        // Mock the LedgerClient response for the async processing
+        LedgerTransferResponse response = new LedgerTransferResponse(true, "Success");
+        when(ledgerClient.transfer(any(LedgerTransferRequest.class)))
+                .thenReturn(response);
 
         // When
         TransferRecord result = transferService.createTransfer(idempotencyKey, fromAccountId, toAccountId, amount);
@@ -59,7 +64,22 @@ class TransferServiceTest {
         assertEquals(fromAccountId, result.getFromAccountId());
         assertEquals(toAccountId, result.getToAccountId());
         assertEquals(amount, result.getAmount());
-        assertEquals(TransferRecord.TransferStatus.PENDING, result.getStatus());
+        
+        // The status should be PENDING initially, but may change to COMPLETED due to async processing
+        // We'll check that it's either PENDING or COMPLETED (both are valid)
+        assertTrue(result.getStatus() == TransferRecord.TransferStatus.PENDING || 
+                  result.getStatus() == TransferRecord.TransferStatus.COMPLETED,
+                  "Status should be PENDING or COMPLETED, but was: " + result.getStatus());
+        
+        // Wait a bit for async processing to complete
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        // After waiting, the status should be COMPLETED due to successful async processing
+        assertEquals(TransferRecord.TransferStatus.COMPLETED, result.getStatus());
     }
 
     @Test
