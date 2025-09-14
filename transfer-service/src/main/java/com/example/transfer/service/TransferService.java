@@ -111,13 +111,6 @@ public class TransferService {
         transferRecordRepository.save(transferRecord);
     }
 
-    public void fallbackTransfer(TransferRecord transferRecord, Exception ex) {
-        log.error("Circuit breaker opened for transfer {}", transferRecord.getTransferId(), ex);
-        transferRecord.setStatus(TransferRecord.TransferStatus.FAILED);
-        transferRecord.setErrorMessage("Ledger service unavailable");
-        transferRecordRepository.save(transferRecord);
-    }
-
     public Optional<TransferRecord> getTransfer(String transferId) {
         log.info("Fetching transfer: {}", transferId);
         return transferRecordRepository.findByTransferId(transferId);

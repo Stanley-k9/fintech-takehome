@@ -37,10 +37,10 @@ class TransferServiceTest {
     @Test
     void createTransfer() {
         // Given
-        String idempotencyKey = "test-key";
-        Long fromAccountId = 1L;
-        Long toAccountId = 2L;
-        BigDecimal amount = new BigDecimal("100.00");
+        final var idempotencyKey = "test-key";
+        final var fromAccountId = 1L;
+        final var toAccountId = 2L;
+        final var amount = new BigDecimal("100.00");
 
         when(transferRecordRepository.findByIdempotencyKey(idempotencyKey))
                 .thenReturn(Optional.empty());
@@ -57,7 +57,7 @@ class TransferServiceTest {
                 .thenReturn(response);
 
         // When
-        TransferRecord result = transferService.createTransfer(idempotencyKey, fromAccountId, toAccountId, amount);
+        final var result = transferService.createTransfer(idempotencyKey, fromAccountId, toAccountId, amount);
 
         // Then
         assertNotNull(result);
@@ -91,7 +91,7 @@ class TransferServiceTest {
         transferRecord.setToAccountId(2L);
         transferRecord.setAmount(new BigDecimal("100.00"));
 
-        LedgerTransferResponse response = new LedgerTransferResponse(true, "Success");
+        final var response = new LedgerTransferResponse(true, "Success");
         when(ledgerClient.transfer(any(LedgerTransferRequest.class)))
                 .thenReturn(response);
         when(transferRecordRepository.save(any(TransferRecord.class)))

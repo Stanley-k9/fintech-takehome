@@ -7,7 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 
@@ -28,7 +27,7 @@ class TransferControllerTest {
     @Test
     void createTransfer() {
         // Given
-        TransferRecord transferRecord = new TransferRecord();
+        final var transferRecord = new TransferRecord();
         transferRecord.setTransferId("transfer-123");
         transferRecord.setStatus(TransferRecord.TransferStatus.COMPLETED);
         
@@ -36,12 +35,12 @@ class TransferControllerTest {
                 .thenReturn(transferRecord);
 
         // When
-        TransferController.CreateTransferRequest request = new TransferController.CreateTransferRequest();
+        final var request = new TransferController.CreateTransferRequest();
         request.setFromAccountId(1L);
         request.setToAccountId(2L);
         request.setAmount(new BigDecimal("100.00"));
-        
-        var httpRequest = mock(jakarta.servlet.http.HttpServletRequest.class);
+
+        final var httpRequest = mock(jakarta.servlet.http.HttpServletRequest.class);
         when(httpRequest.getHeader("X-Request-ID")).thenReturn("test-request-123");
         
         var response = transferController.createTransfer(request, "idempotency-key-123", httpRequest);
@@ -57,7 +56,7 @@ class TransferControllerTest {
     @Test
     void getTransfer() {
         // Given
-        TransferRecord transferRecord = new TransferRecord();
+        final var transferRecord = new TransferRecord();
         transferRecord.setTransferId("transfer-456");
         transferRecord.setStatus(TransferRecord.TransferStatus.PENDING);
         
@@ -65,7 +64,7 @@ class TransferControllerTest {
                 .thenReturn(java.util.Optional.of(transferRecord));
 
         // When
-        var response = transferController.getTransfer("transfer-456");
+        final var response = transferController.getTransfer("transfer-456");
 
         // Then
         assertNotNull(response);

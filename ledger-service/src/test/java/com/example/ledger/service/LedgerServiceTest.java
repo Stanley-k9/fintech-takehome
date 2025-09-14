@@ -65,11 +65,11 @@ class LedgerServiceTest {
     @Test
     void getAccount() {
         // Given
-        Long accountId = 1L;
+        final var accountId = 1L;
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(fromAccount));
 
         // When
-        Optional<Account> result = ledgerService.getAccount(accountId);
+        final var result = ledgerService.getAccount(accountId);
 
         // Then
         assertTrue(result.isPresent());
@@ -79,11 +79,11 @@ class LedgerServiceTest {
     @Test
     void getAccount_ShouldReturnEmptyWhenNotExists() {
         // Given
-        Long accountId = 999L;
+        final var accountId = 999L;
         when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
         // When
-        Optional<Account> result = ledgerService.getAccount(accountId);
+        final var result = ledgerService.getAccount(accountId);
 
         // Then
         assertTrue(result.isEmpty());
@@ -92,8 +92,8 @@ class LedgerServiceTest {
     @Test
     void applyTransfer_ShouldProcessTransferSuccessfully() {
         // Given
-        String transferId = "transfer-123";
-        BigDecimal amount = new BigDecimal("100.00");
+        final var transferId = "transfer-123";
+        final var amount = new BigDecimal("100.00");
         
         when(ledgerEntryRepository.existsByTransferId(transferId)).thenReturn(false);
         when(accountRepository.findByIdsForUpdate(List.of(1L, 2L))).thenReturn(List.of(fromAccount, toAccount));
@@ -101,7 +101,7 @@ class LedgerServiceTest {
         when(ledgerEntryRepository.save(any(LedgerEntry.class))).thenReturn(new LedgerEntry());
 
         // When
-        boolean result = ledgerService.applyTransfer(transferId, 1L, 2L, amount);
+        final var result = ledgerService.applyTransfer(transferId, 1L, 2L, amount);
 
         // Then
         assertTrue(result);
@@ -112,11 +112,11 @@ class LedgerServiceTest {
     @Test
     void applyTransfer_ShouldReturnTrueForDuplicateTransferId() {
         // Given
-        String transferId = "transfer-123";
+        final var transferId = "transfer-123";
         when(ledgerEntryRepository.existsByTransferId(transferId)).thenReturn(true);
 
         // When
-        boolean result = ledgerService.applyTransfer(transferId, 1L, 2L, new BigDecimal("100.00"));
+        final var result = ledgerService.applyTransfer(transferId, 1L, 2L, new BigDecimal("100.00"));
 
         // Then
         assertTrue(result);
@@ -142,8 +142,8 @@ class LedgerServiceTest {
     @Test
     void applyTransferExceptionInvalidAmount() {
         // Given
-        String transferId = "transfer-123";
-        BigDecimal amount = new BigDecimal("-100.00");
+        final var transferId = "transfer-123";
+        final var amount = new BigDecimal("-100.00");
 
         // When & Then
         assertThrows(IllegalArgumentException.class, () -> 
